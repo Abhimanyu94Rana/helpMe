@@ -15,6 +15,23 @@ const userSchema = mongoose.Schema({
         type:String,
         required:true
     },
+    bankInfo:{
+        accountName:{
+            type:String
+        },
+        accountNumber:{
+            type:Number
+        },
+        ifscNumber:{
+            type:String
+        },
+        adharCard:{
+            type:String
+        },
+        panCard:{
+            type:String
+        }
+    },
     isAdmin:{
         type:Boolean,
         required:true,

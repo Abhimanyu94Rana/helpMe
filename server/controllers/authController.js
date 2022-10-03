@@ -1,11 +1,19 @@
-import { response } from "express"
 import asyncHandler from "express-async-handler"
+import { validationResult } from "express-validator"
 import User from '../models/userModel.js'
 import generateToken from "../utils/generateToken.js"
 import {sendEmail} from '../utils/helper.js'
 
 // Login
 const login = asyncHandler( async (req,res) => {
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            errors: errors.array()
+        });
+    }
 
     const {email,password} = req.body
     const user = await User.findOne({email})
@@ -30,15 +38,22 @@ const login = asyncHandler( async (req,res) => {
 // Register
 const register = asyncHandler( async (req,res) => {
 
-    const {name,email,password,confirmPassword} = req.body
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            errors: errors.array()
+        });
+    }
+
+    const {name,email,password} = req.body
 
     const userExists = await User.findOne({email})
     if(userExists){
-        res.status(400)
-        return res.send({
+        return res.status(400).json({
             status: false,
             message:'Email already exists'
-        });
+        })
     }else{
 
         const user = await User.create({
@@ -46,27 +61,22 @@ const register = asyncHandler( async (req,res) => {
         })
 
         if(user){
-            res.status(200)
-            res.json({
+
+            return res.status(400).json({
                 status:true,
                 message:"User created successfully",
                 _id:user._id,
                 name:user.name,
                 email:user.email,
                 token:generateToken(user._id)
-            })
+            });
         }else{
-            res.status(400)
-            return res.send({
+            return res.status(400).json({
                 status: false,
                 message:'User is not created'
-            });
+            })            
         }
-    }
-
-    res.json(
-        {name,email,password,confirmPassword}
-    )
+    } 
 })
 
 // Forgot Password

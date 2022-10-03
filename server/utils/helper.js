@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 
+// Send email
 const sendEmail = (to,subject,body) => {
     
     const transporter = nodemailer.createTransport({
@@ -26,6 +27,15 @@ const sendEmail = (to,subject,body) => {
     });
 }
 
+// Upload file
+const uploadFile = (req,res) => {
+    return res.status(200).json({
+        status:false,
+        message:"File has been uploaded successfully."
+    })
+}
+
 export {
-    sendEmail
+    sendEmail,
+    uploadFile
 }

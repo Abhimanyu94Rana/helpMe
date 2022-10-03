@@ -3,25 +3,48 @@ import asyncHandler from "express-async-handler";
 
 const profile = asyncHandler( async (req,res) => {
     
-    const user = await User.findById(req.user._id)
+    const user = await User.findById(req.user._id).select('-password')
 
     if(user){
-        res.json({
-            _id:user._id,
-            name:user.name,
-            email:user.email,
-            isAdmin:user.isAdmin,
+        res.status(200).json({
+            status:true,
+            data:user
         })
         
     }else{
-        res.status(404)
-        throw new Error({
+        res.status(404).json({
             status:false,
-            message:'User not found'
+            message:"User not found."
         })
+        
     }
 })
 
+// Update Profile
+const updateProfile = asyncHandler( async(req,res) => {
+    
+    try {
+        
+        const bankInfoFields = {"bankInfo":req.body}
+        const user = await User.findOneAndUpdate(
+            {_id:req.user._id},
+            {$set: bankInfoFields},
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        )
+        return res.status(200).json({
+            status:true,
+            message:"Profile has been updated successfully.",
+            data:user
+        })
+    } catch (error) {
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }    
+})
+
 export {
-    profile
+    profile,
+    updateProfile
 }
