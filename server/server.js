@@ -5,9 +5,14 @@ import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import jobRoutes from './routes/jobRoutes.js'
+import fileRoutes from './routes/fileRoutes.js'
 import {notFound,errorHandler} from './middleware/errorMiddleware.js'
-import {upload} from './utils/upload.js'
-import fs from 'fs'
+import path from "path"
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Configure ENV
 dotenv.config()
@@ -24,6 +29,8 @@ app.get('/',(req,res) => {
     res.send('Api is running')
 })
 
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Auth Routes
 app.use('/api/auth',authRoutes)
 
@@ -37,24 +44,8 @@ app.use('/api/category',categoryRoutes)
 app.use('/api/job',jobRoutes)
 
 // Upload File Route
-app.post("/api/file",upload.single('file'),(req,res)=>{
-    let img = fs.readFileSync(req.file.path);
-    let encodeImg = img.toString('base64');
-    let finalImg = {
-        contentType:req.file.mimetype,
-        image:new Buffer(encodeImg,'base64')
-    };
-    imageModel.create(finalImg,function(err,result){
-        if(err){
-            console.log(err);
-        }else{
-            console.log(result.img.Buffer);
-            console.log("Saved To database");
-            res.contentType(finalImg.contentType);
-            res.send(finalImg.image);
-        }
-    })
-})
+app.use('/api/file',fileRoutes)
+
 
 app.use(notFound)
 app.use(errorHandler)

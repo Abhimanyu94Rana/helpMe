@@ -34,6 +34,12 @@ const updateProfile = asyncHandler( async(req,res) => {
         if(req.body.ifscNumber){
             bankInfoFields.ifscNumber = req.body.ifscNumber
         }
+        if(req.body.adharCard){
+            bankInfoFields.adharCard = req.body.adharCard
+        }
+        if(req.body.panCard){
+            bankInfoFields.panCard = req.body.panCard
+        }
         const bankInfo = {"bankInfo":bankInfoFields}
         const user = await User.findOneAndUpdate(
             {_id:req.user._id},
