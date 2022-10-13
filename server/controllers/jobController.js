@@ -38,7 +38,34 @@ const getJobs =  asyncHandler( async(req,res) => {
     }
 })
 
+const jobInfo = asyncHandler( async(req,res) => {
+
+    try {
+
+        const job = await Job.findById(req.params.id)
+        if(job){
+            return res.status(200).json({
+                status:true,
+                message:"Job found successfully",
+                data:job
+            })
+        }
+        return res.status(404).json({
+            status:false,
+            message:"Job not found"
+        })
+        
+    } catch (error) {
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+
+})
+
 export {
     createJob,
-    getJobs
+    getJobs,
+    jobInfo
 }

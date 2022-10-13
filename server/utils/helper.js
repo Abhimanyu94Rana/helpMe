@@ -1,18 +1,22 @@
+import { config } from 'dotenv';
 import nodemailer from 'nodemailer'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 // Send email
 const sendEmail = (to,subject,body) => {
     
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        service: process.env.EMAIL_SERVICE,
         auth: {
-            user: 'youremail@gmail.com',
-            pass: 'yourpassword'
+            user: process.env.EMAIL_USERNAME,
+            pass: process.env.EMAIL_PASSWORD
         }
     });
     
     const mailOptions = {
-        from: 'youremail@gmail.com',
+        from: process.env.EMAIL_USERNAME,
         to: to,
         subject: subject,
         text: body
@@ -20,9 +24,9 @@ const sendEmail = (to,subject,body) => {
     
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
-            console.log(error);
+            return {status:false,message:error}
         } else {
-            console.log('Email sent: ' + info.response);
+            return {status:false,message:error,data:info.response}
         }
     });
 }

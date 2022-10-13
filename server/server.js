@@ -26,7 +26,7 @@ const app = express()
 app.use(express.json())
 
 app.get('/',(req,res) => {
-    res.send('Api is running')
+    res.send('HelpMe is ready to provide its service.')
 })
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

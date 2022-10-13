@@ -19,12 +19,16 @@ const login = asyncHandler( async (req,res) => {
     const user = await User.findOne({email})
 
     if(user && await user.matchPassword(password) ){
-        res.json({
-            _id:user._id,
-            name: user.name,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            token: generateToken(user._id)
+        res.status(200).json({
+            status:true,
+            message:"You are logged in successfully.",
+            data:{
+                _id:user._id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                token: generateToken(user._id)
+            }
         })
     }else{
         res.status(404)
@@ -82,13 +86,22 @@ const register = asyncHandler( async (req,res) => {
 // Forgot Password
 const forgotPassword = asyncHandler(async(req,res) => {
     const {email} = req.body
-    const isExists = await User.findOne({email})
-    if(isExists){
-        const response = sendEmail(email,"forgot_password","lorem ipsum content")
+    const user = await User.findOne({email})
+    if(user){
+
+        //Generate and set password reset token
+        user.generatePasswordReset();
+
+        // Save the updated user object
+        user.save()
+
+        const body = `Hi ${user.username} \n 
+        Please click on the following link ${link} to reset your password. \n\n 
+        If you did not request this, please ignore this email and your password will remain unchanged.\n`
+        const response = await sendEmail(email,"Forgot Password",body)
         return res.send(response)
     }
-    res.status(404)
-    return res.send({
+    return res.status(404).json({
         status:false,
         message:"User not found."
     })
