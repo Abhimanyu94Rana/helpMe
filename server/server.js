@@ -46,6 +46,21 @@ app.use('/api/job',jobRoutes)
 // Upload File Route
 app.use('/api/file',fileRoutes)
 
+// Success Route
+app.get('/success', function(req, res) {
+    return res.status(200).json({
+        status:true,
+        message:"Payment has been completed successfully."
+    })
+})
+
+// Failure Route
+app.get('/failure', function(req, res) {
+    return res.status(404).json({
+        status:true,
+        message:"Payment has not been completed successfully."
+    })
+})
 
 app.use(notFound)
 app.use(errorHandler)
