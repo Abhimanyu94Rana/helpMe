@@ -24,10 +24,12 @@ const login = asyncHandler( async (req,res) => {
             message:"You are logged in successfully.",
             data:{
                 _id:user._id,
-                name: user.name,
-                email: user.email,
-                isAdmin: user.isAdmin,
-                token: generateToken(user._id)
+                name:user.name,
+                email:user.email,
+                profilePic:user.profilePic,
+                countryCode:user.countryCode,
+                token:generateToken(user._id),
+                step:user.step
             }
         })
     }else{
@@ -50,7 +52,7 @@ const register = asyncHandler( async (req,res) => {
         });
     }
 
-    const {name,email,password} = req.body
+    const {name,email,password,profilePic,countryCode} = req.body
 
     const userExists = await User.findOne({email})
     if(userExists){
@@ -59,9 +61,9 @@ const register = asyncHandler( async (req,res) => {
             message:'Email already exists'
         })
     }else{
-
+        const step = 1
         const user = await User.create({
-            name,email,password
+            name,email,password,profilePic,countryCode,step
         })
 
         if(user){
@@ -69,10 +71,15 @@ const register = asyncHandler( async (req,res) => {
             return res.status(400).json({
                 status:true,
                 message:"User created successfully",
-                _id:user._id,
-                name:user.name,
-                email:user.email,
-                token:generateToken(user._id)
+                data:{
+                    _id:user._id,
+                    name:user.name,
+                    email:user.email,
+                    profilePic:user.profilePic,
+                    countryCode:user.countryCode,
+                    token:generateToken(user._id),
+                    step:user.step
+                }
             });
         }else{
             return res.status(400).json({

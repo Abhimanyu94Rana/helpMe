@@ -18,7 +18,9 @@ router.post('/login',
 router.post('/register',
     [
         check('name').not().isEmpty().withMessage('Please enter valid email.'),
-        check('email').isEmail().withMessage('Please enter valid email.'),        
+        check('email').isEmail().withMessage('Please enter valid email.'),
+        check('profilePic').not().isEmpty().withMessage('Invalid profile picture.'),
+        check('countryCode').not().isEmpty().withMessage('Invalid country code.'),        
         check('password')
             .not().isEmpty().withMessage('Please enter password.')
             .isLength({min:6}).withMessage('Password should be minimum characters of 6.')

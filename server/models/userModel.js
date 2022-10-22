@@ -16,6 +16,14 @@ const userSchema = mongoose.Schema({
         type:String,
         required:true
     },
+    profilePic:{
+        type:String,
+        required:true
+    },
+    countryCode:{
+        type:String,
+        required:true
+    },
     bankInfo:{
         accountName:{
             type:String
@@ -46,6 +54,9 @@ const userSchema = mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
         required: false
+    },
+    step:{
+        type:Number
     }
 },{timestamps:true})
 

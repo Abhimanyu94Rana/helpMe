@@ -10,6 +10,11 @@ import {notFound,errorHandler} from './middleware/errorMiddleware.js'
 import path from "path"
 import { fileURLToPath } from 'url';
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import swaggerUi from 'swagger-ui-express' 
+const swaggerFile = require('./swagger_output.json');
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -28,6 +33,9 @@ app.use(express.json())
 app.get('/',(req,res) => {
     res.send('HelpMe is ready to provide its service.')
 })
+
+// Swagger Doc Route
+app.use('/apis', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
