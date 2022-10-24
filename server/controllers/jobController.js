@@ -1,3 +1,4 @@
+import e from "express";
 import asyncHandler from "express-async-handler";
 import Job from "../models/jobModel.js";
 
@@ -21,8 +22,22 @@ const createJob = asyncHandler( async(req,res) => {
 })
 
 const getJobs =  asyncHandler( async(req,res) => {
-    const jobs = await Job.find({})
 
+    const user = req.user
+    let jobs = {} 
+    if(user && user.type == 1){ 
+        // For need
+        jobs = await Job.find({ 
+            'user' : [user._id]     
+        }).populate('category').populate('user');
+    }else{ 
+        // For help
+        jobs = await Job.find({ 
+            'category' : [user.categories]     
+        }).populate('category').populate('user');
+    }
+
+    
     if(jobs){
         res.status(200)
         res.json({

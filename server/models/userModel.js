@@ -41,6 +41,11 @@ const userSchema = mongoose.Schema({
             type:String
         }
     },
+    categories: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+        ref: 'Category',
+    }],
     isAdmin:{
         type:Boolean,
         required:true,
@@ -50,12 +55,14 @@ const userSchema = mongoose.Schema({
         type: String,
         required: false
     },
-
     resetPasswordExpires: {
         type: Date,
         required: false
     },
     step:{
+        type:Number
+    },
+    type:{
         type:Number
     }
 },{timestamps:true})

@@ -19,7 +19,12 @@ const login = asyncHandler( async (req,res) => {
     const user = await User.findOne({email})
 
     if(user && await user.matchPassword(password) ){
-        res.status(200).json({
+
+        // Update the type of user
+        user.type = req.body.type
+        user.save()
+
+        return res.status(200).json({
             status:true,
             message:"You are logged in successfully.",
             data:{
@@ -29,12 +34,12 @@ const login = asyncHandler( async (req,res) => {
                 profilePic:user.profilePic,
                 countryCode:user.countryCode,
                 token:generateToken(user._id),
-                step:user.step
+                step:user.step,
+                type:user.type             
             }
         })
     }else{
-        res.status(404)
-        res.json({
+        return res.status(404).json({
             status:false,
             message:"Invalid login credentials"
         })
@@ -62,8 +67,10 @@ const register = asyncHandler( async (req,res) => {
         })
     }else{
         const step = 1
-        const user = await User.create({
-            name,email,password,profilePic,countryCode,step
+        // Update the type of user
+       const type = req.body.type ? req.body.type : null        
+       const user = await User.create({
+            name,email,password,profilePic,countryCode,step,type
         })
 
         if(user){
@@ -78,7 +85,8 @@ const register = asyncHandler( async (req,res) => {
                     profilePic:user.profilePic,
                     countryCode:user.countryCode,
                     token:generateToken(user._id),
-                    step:user.step
+                    step:user.step,
+                    type:user.type
                 }
             });
         }else{

@@ -23,27 +23,11 @@ const profile = asyncHandler( async (req,res) => {
 // Update Profile
 const updateProfile = asyncHandler( async(req,res) => {
     
-    try {
-        let bankInfoFields = {}
-        if(req.body.accountName){
-            bankInfoFields.accountName = req.body.accountName
-        }  
-        if(req.body.accountNumber){
-            bankInfoFields.accountNumber = req.body.accountNumber
-        } 
-        if(req.body.ifscNumber){
-            bankInfoFields.ifscNumber = req.body.ifscNumber
-        }
-        if(req.body.adharCard){
-            bankInfoFields.adharCard = req.body.adharCard
-        }
-        if(req.body.panCard){
-            bankInfoFields.panCard = req.body.panCard
-        }
-        const bankInfo = {"bankInfo":bankInfoFields}
+    try {  
+        const postData = req.body
         const user = await User.findOneAndUpdate(
             {_id:req.user._id},
-            {$set: bankInfo},
+            {$set: postData},
             { new: true, upsert: true, setDefaultsOnInsert: true }
         )
         return res.status(200).json({
