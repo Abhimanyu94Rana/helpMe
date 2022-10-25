@@ -25,6 +25,7 @@ const updateProfile = asyncHandler( async(req,res) => {
     
     try {  
         const postData = req.body
+        postData.step = 2
         const user = await User.findOneAndUpdate(
             {_id:req.user._id},
             {$set: postData},
