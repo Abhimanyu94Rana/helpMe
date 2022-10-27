@@ -16,7 +16,12 @@ const createJob = asyncHandler( async(req,res) => {
         res.status(200)
         res.json({
             status:true,
-            message:"Job has been created successfully."
+            message:"Job has been created successfully.",
+            data:{
+                _id:job._id,
+                title:job.title,
+                cost:job.cost
+            }
         })
     }
 })
