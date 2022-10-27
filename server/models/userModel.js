@@ -34,7 +34,10 @@ const userSchema = mongoose.Schema({
         ifscNumber:{
             type:String
         },
-        adharCard:{
+        adharCardFront:{
+            type:String
+        },
+        adharCardBack:{
             type:String
         },
         panCard:{
