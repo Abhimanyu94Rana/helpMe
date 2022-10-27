@@ -32,9 +32,10 @@ const getJobs =  asyncHandler( async(req,res) => {
         }).populate('category').populate('user');
     }else{ 
         // For help
-        jobs = await Job.find({ 
-            'category' : [user.categories]     
-        }).populate('category').populate('user');
+        // jobs = await Job.find({ 
+        //     'category' : [user.categories]     
+        // }).populate('category').populate('user');
+        jobs = await Job.find().populate('category').populate('user');
     }
 
     
