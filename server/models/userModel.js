@@ -39,6 +39,9 @@ const userSchema = mongoose.Schema({
         },
         panCard:{
             type:String
+        },
+        socialId:{
+            type:String
         }
     },
     categories: [{
