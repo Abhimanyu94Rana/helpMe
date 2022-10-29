@@ -7,43 +7,59 @@ import {sendEmail} from '../utils/helper.js'
 // Login
 const login = asyncHandler( async (req,res) => {
 
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            errors: errors.array()
-        });
-    }
+    try {
 
-    const {email,password} = req.body
-    const user = await User.findOne({email})
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
 
-    if(user && await user.matchPassword(password) ){
+        const {email,password} = req.body
+        const user = await User.findOne({email})
 
-        // Update the type of user
-        user.type = req.body.type
-        user.save()
+        if(user && await user.matchPassword(password) ){
 
-        return res.status(200).json({
-            status:true,
-            message:"You are logged in successfully.",
-            data:{
-                _id:user._id,
-                name:user.name,
-                email:user.email,
-                profilePic:user.profilePic,
-                countryCode:user.countryCode,
-                token:generateToken(user._id),
-                step:user.step,
-                type:user.type             
-            }
-        })
-    }else{
+            // Update the type of user
+            const updateUser = User.findByIdAndUpdate(user._id, { type: req.body.type },
+                function (err, docs) {
+                    if (err){
+                        return res.status(400).json({
+                            success: false,
+                            errors: err
+                        });
+                    }                    
+            });
+
+            return res.status(200).json({
+                status:true,
+                message:"You are logged in successfully.",
+                data:{
+                    _id:user._id,
+                    name:user.name,
+                    email:user.email,
+                    profilePic:user.profilePic,
+                    countryCode:user.countryCode,
+                    token:generateToken(user._id),
+                    step:user.step,
+                    type:user.type             
+                }
+            })
+        }else{
+            return res.status(404).json({
+                status:false,
+                message:"Invalid login credentials"
+            })
+        }
+    } catch (error) {
         return res.status(404).json({
             status:false,
-            message:"Invalid login credentials"
+            message:error.message
         })
     }
+    
 })
 
 // Register
