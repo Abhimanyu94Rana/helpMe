@@ -42,20 +42,31 @@ const applyJob = asyncHandler( async(req,res) => {
 
     try {
         const job = req.params.id
-        const user = req.user._id
 
-        const jobApply = await JobApply.create({job,user})
-        if(jobApply){
-            return res.status(200).json({
-                status:true,
-                message:"Applied on job successfully.",
-                data:jobApply
-            })
+        // Find job and get job owner id
+        const jobInfo = await Job.findById(job)
+        if(jobInfo){
+            const jobOwner = jobInfo.user   
+            const user = req.user._id
+
+            const jobApply = await JobApply.create({job,jobOwner,user})
+            if(jobApply){
+                return res.status(200).json({
+                    status:true,
+                    message:"Applied on job successfully.",
+                    data:jobApply
+                })
+            }
+            return res.status(404).json({
+                status:false,
+                message:"Not applied on job successfully."
+            })          
         }
         return res.status(404).json({
             status:false,
-            message:"Not applied on job successfully."
+            message:"Job not found."
         })
+        
     } catch (error) {
         return res.status(404).json({
             status:false,
@@ -65,7 +76,35 @@ const applyJob = asyncHandler( async(req,res) => {
     
 })
 
+const startJob = asyncHandler( async(req,res) => {
+    try {
+        const job = req.params.id
+        const user = req.user._id
+        const status = 1 // 1:started
+        const startTime = new Date()
+
+        const jobApply = await JobApply.findByIdAndUpdate(job,{user,status,startTime})
+        if(jobApply){
+            return res.status(200).json({
+                status:true,
+                message:"Job has started successfully.",
+                data:jobApply
+            })
+        }
+        return res.status(404).json({
+            status:false,
+            message:"Job has not started successfully."
+        })
+    } catch (error) {
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+})
+
 export {
     // getJobs,
-    applyJob
+    applyJob,
+    startJob
 }

@@ -166,10 +166,39 @@ const hire = asyncHandler(async(req,res) => {
     }
 })
 
+const endJob = asyncHandler( async(req,res) => {
+    try {
+       
+        const job = req.params.id
+        const user = req.user._id
+        const status = 2 // 1:ended
+        const endTime = new Date()
+
+        const jobApply = await JobApply.findByIdAndUpdate(job,{user,status,endTime},{new: true})
+        if(jobApply){
+            return res.status(200).json({
+                status:true,
+                message:"Job has ended successfully.",
+                data:jobApply
+            })
+        }
+        return res.status(404).json({
+            status:false,
+            message:"Job has not ended successfully."
+        })
+    } catch (error) {
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+})
+
 export {
     createJob,
     getJobs,
     jobInfo,
     jobApplicants,
-    hire
+    hire,
+    endJob
 }
