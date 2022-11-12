@@ -3,6 +3,8 @@ import { validationResult } from "express-validator"
 import User from '../models/userModel.js'
 import generateToken from "../utils/generateToken.js"
 import {sendEmail} from '../utils/helper.js'
+import Stripe from 'stripe'
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Login
 const login = asyncHandler( async (req,res) => {
@@ -20,10 +22,24 @@ const login = asyncHandler( async (req,res) => {
         const {email,password} = req.body
         const user = await User.findOne({email})
 
-        if(user && await user.matchPassword(password) ){
+        if(user && await user.matchPassword(password) ){            
 
+            // Create stripe account for further payment flow if does not exists for the user
+            if(user.stripeAccountId === null){
+                const account = await stripe.accounts.create({
+                    type: 'express',
+                    country: user.countryCode,
+                    email: user.email,
+                    capabilities: {
+                      card_payments: {requested: true},
+                      transfers: {requested: true},
+                    },
+                });
+                return res.json(account)
+            }  
+            
             // Update the type of user
-            const updateUser = User.findByIdAndUpdate(user._id, { type: req.body.type },
+            const updateUser = User.findByIdAndUpdate(user._id, {type},
                 function (err, docs) {
                     if (err){
                         return res.status(400).json({
@@ -32,7 +48,7 @@ const login = asyncHandler( async (req,res) => {
                         });
                     }                    
             });
-
+            
             return res.status(200).json({
                 status:true,
                 message:"You are logged in successfully.",

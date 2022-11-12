@@ -52,6 +52,10 @@ const userSchema = mongoose.Schema({
         required: false,
         ref: 'Category',
     }],
+    stripeAccountId:{
+        type:String,
+        default:null        
+    },
     isAdmin:{
         type:Boolean,
         required:true,

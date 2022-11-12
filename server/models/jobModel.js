@@ -30,6 +30,14 @@ const jobSchema = mongoose.Schema({
     address:{
         type:String,
         required:true
+    },
+    payment:{
+        type:Boolean,
+        default:false
+    },
+    status:{
+        type:Boolean,
+        default:false
     }
 },{timestamps:true})
 
