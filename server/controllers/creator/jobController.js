@@ -1,4 +1,3 @@
-import e from "express";
 import asyncHandler from "express-async-handler";
 import Job from "../../models/jobModel.js";
 import JobApply from "../../models/jobApplyModel.js";
@@ -25,7 +24,7 @@ const createJob = asyncHandler( async(req,res) => {
                 line_items: [
                     {
                         price_data:{
-                            currency:'inr',
+                            currency:'USD',
                             product_data:{
                                 name:job.title
                             },
@@ -239,7 +238,7 @@ const hire = asyncHandler(async(req,res) => {
 
         return res.status(404).json({
             status:false,
-            message:"Jod is not found or already taken."
+            message:"Job is not found or already taken."
         })
         
     } catch (error) {
@@ -254,27 +253,58 @@ const endJob = asyncHandler( async(req,res) => {
     try {
        
         const job = req.params.id
-        const user = req.user._id
-        const status = 2 // 1:ended
-        const endTime = new Date()
+        const jobOwner = req.user._id
 
         // Check if job is running or not
-        const isJobRunning = await JobApply.find({job,jobOwner:user})
-        if(isJobRunning.length > 0){
-
+        const isJobRunning = await JobApply.findOne({job,jobOwner})        
+        if(isJobRunning){                        
             
-            const jobApply = await JobApply.findOneAndUpdate({job,jobOwner:user},{status,endTime},{new: true})
-            if(jobApply){
-                return res.status(200).json({
-                    status:true,
-                    message:"Job has ended successfully.",
-                    data:jobApply
+            if(isJobRunning.isHired === true && isJobRunning.status === 1){
+
+                // Find job jobInfo
+                const jobInfo = await Job.findById(job);
+
+                // Find helper (user to whom payment will be sent after the job completion) info
+                const helper = await User.findById(isJobRunning.user)
+
+                if(jobInfo && helper){
+
+                    // Send payment from admin account to helper
+                    const session = await stripe.checkout.sessions.create({
+                        line_items: [{
+                            price: jobInfo.cost,
+                            quantity: 1,
+                        }],
+                        mode: 'payment',
+                        success_url: `${process.env.BASE_URL}api/job/end/success/${job._id}`,
+                        cancel_url: `${process.env.BASE_URL}api/job/end/failure/${job._id}`,
+                        payment_intent_data: {
+                            application_fee_amount: 2,
+                            transfer_data: {
+                                destination: helper.stripeAccountId,
+                            },
+                        },
+                    });
+
+                    if(session.url){
+                        return res.status(200).json({
+                            status:true,
+                            message:"Payment process has been started.",
+                            payment_url:session.url
+                        })
+                    }
+                } 
+                return res.status(404).json({
+                    status:false,
+                    message:"Job or Helper not found."
+                })                   
+
+            }else{
+                return res.status(404).json({
+                    status:false,
+                    message:"Job is not hired or may be ended."
                 })
             }
-            return res.status(404).json({
-                status:false,
-                message:"Job has not ended. Please try again."
-            })
         }
         return res.status(404).json({
             status:false,
@@ -289,6 +319,51 @@ const endJob = asyncHandler( async(req,res) => {
     }
 })
 
+const endSuccess = asyncHandler(async(req,res)=>{
+    try {
+        const status = 2 // 1:started, 2:ended
+        const endTime = new Date()
+        const jobApplyId = req.params.jobApplyId
+        const jobApply = await JobApply.findByIdAndUpdate(jobApplyId,{status},{new: true})
+        if(jobApply){
+            return res.status(200).json({
+                status:true,
+                message:"Job has ended successfully.",
+                data:jobApply
+            })
+        }
+        return res.status(404).json({
+            status:false,
+            message:"JobApply not found."
+        })
+
+    } catch (error) {
+
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+})
+
+const endFailure = asyncHandler(async(req,res)=>{
+    try {
+        
+        return res.status(200).json({
+            status:false,
+            message:"Payment has been failed. Please try again."
+        })
+
+    } catch (error) {
+
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+})
+
+
 export {
     createJob,
     success,
@@ -297,5 +372,7 @@ export {
     jobInfo,
     jobApplicants,
     hire,
-    endJob
+    endJob,
+    endSuccess,
+    endFailure
 }

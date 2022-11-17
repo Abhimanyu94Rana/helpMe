@@ -1,5 +1,5 @@
 import express from "express";
-import { login ,register,forgotPassword} from "../controllers/authController.js";
+import { login ,register,forgotPassword, reauth,returnStripe} from "../controllers/authController.js";
 const router = express.Router()
 import {check} from 'express-validator'
 
@@ -13,6 +13,12 @@ router.post('/login',
     ],
     login
 )
+
+// Stripe Reauth
+router.get('/:userId/:accountId/reauth',reauth)
+
+// Stripe Return
+router.get('/:userId/:accountId/return',returnStripe)
 
 // Register
 router.post('/register',

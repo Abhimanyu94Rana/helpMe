@@ -19,26 +19,45 @@ const login = asyncHandler( async (req,res) => {
             });
         }
 
-        const {email,password} = req.body
+        const {email,password,type} = req.body
         const user = await User.findOne({email})
 
         if(user && await user.matchPassword(password) ){            
 
-            // Create stripe account for further payment flow if does not exists for the user
-            if(user.stripeAccountId === null){
-                const account = await stripe.accounts.create({
-                    type: 'express',
-                    country: user.countryCode,
-                    email: user.email,
-                    capabilities: {
-                      card_payments: {requested: true},
-                      transfers: {requested: true},
-                    },
-                });
-                return res.json(account)
-            }  
+            // Check if the user type is 2
+            if(type == 2){
+                // Create stripe account for further payment flow if does not exists for the user
+                if(user.stripeAccountId === null){
+                    const account = await stripe.accounts.create({
+                        type: 'express',
+                        country: user.countryCode,
+                        email: user.email,
+                        capabilities: {
+                          card_payments: {requested: true},
+                          transfers: {requested: true},
+                        },
+                    });
+                    if(account.id){
+                        const accountLink = await stripe.accountLinks.create({
+                            account: account.id,
+                            refresh_url: `${process.env.BASE_URL}api/auth/${user._id}/${account.id}/reauth`,
+                            return_url: `${process.env.BASE_URL}api/auth/${user._id}/${account.id}/return`,
+                            type: 'account_onboarding',
+                        });
+                        return res.status(200).json({
+                            status:true,
+                            message:"Please setup your stripe account using below given link.",
+                            data:accountLink
+                        })
+                    }
+                    return res.status(404).json({
+                        status:false,
+                        message:"Please try again or check."
+                    })
+                }
+            }             
             
-            // Update the type of user
+            // Update the user
             const updateUser = User.findByIdAndUpdate(user._id, {type},
                 function (err, docs) {
                     if (err){
@@ -63,6 +82,7 @@ const login = asyncHandler( async (req,res) => {
                     type:user.type             
                 }
             })
+
         }else{
             return res.status(404).json({
                 status:false,
@@ -76,6 +96,66 @@ const login = asyncHandler( async (req,res) => {
         })
     }
     
+})
+
+// Stripe Reauth
+const reauth = asyncHandler(async(req,res) => {
+
+    return res.status(200).json({
+        status:true,
+        message:"This does not implemented yet."
+    })
+
+    // const userId = req.params.userId
+    // const accountId = req.params.accountId
+    // const updateUser = User.findByIdAndUpdate(userId, {stripeAccountId:accountId},
+    //     function (err, docs) {
+    //         if (err){
+    //             return res.status(400).json({
+    //                 status: false,
+    //                 errors: err
+    //             });
+    //         }                    
+    // });
+
+    // return res.status(200).json({
+    //     status:true,
+    //     message:"Your account has been connected to stripe account."
+    // })
+})
+
+// Stripe Return
+const returnStripe = asyncHandler(async(req,res) => {
+    
+    const _id = req.params.userId
+    const accountId = req.params.accountId
+
+    const updateUser = User.findByIdAndUpdate(_id, {stripeAccountId:accountId},
+        function (err, docs) {
+            if (err){
+                return res.status(400).json({
+                    status: false,
+                    errors: err
+                });
+            }                    
+    });
+
+    const user = await User.findById({_id})
+
+    return res.status(200).json({
+        status:true,
+        message:"You are logged in successfully.",
+        data:{
+            _id:user._id,
+            name:user.name,
+            email:user.email,
+            profilePic:user.profilePic,
+            countryCode:user.countryCode,
+            token:generateToken(user._id),
+            step:user.step,
+            type:user.type             
+        }
+    });
 })
 
 // Register
@@ -156,6 +236,8 @@ const forgotPassword = asyncHandler(async(req,res) => {
 
 export {
     login,
+    reauth,
+    returnStripe,
     register,
     forgotPassword
 }
