@@ -24,7 +24,7 @@ const createJob = asyncHandler( async(req,res) => {
                 line_items: [
                     {
                         price_data:{
-                            currency:'USD',
+                            currency:process.env.CURRENCY,
                             product_data:{
                                 name:job.title
                             },
@@ -266,33 +266,77 @@ const endJob = asyncHandler( async(req,res) => {
 
                 // Find helper (user to whom payment will be sent after the job completion) info
                 const helper = await User.findById(isJobRunning.user)
-
                 if(jobInfo && helper){
+                    console.log(helper.stripeAccountId); 
 
-                    // Send payment from admin account to helper
-                    const session = await stripe.checkout.sessions.create({
-                        line_items: [{
-                            price: jobInfo.cost,
-                            quantity: 1,
-                        }],
-                        mode: 'payment',
-                        success_url: `${process.env.BASE_URL}api/job/end/success/${job._id}`,
-                        cancel_url: `${process.env.BASE_URL}api/job/end/failure/${job._id}`,
-                        payment_intent_data: {
-                            application_fee_amount: 2,
-                            transfer_data: {
-                                destination: helper.stripeAccountId,
-                            },
-                        },
+
+                    // test========
+
+                    const transfer = await stripe.transfers.create({
+                        amount: 1,
+                        currency: process.env.CURRENCY,
+                        destination: helper.stripeAccountId,
+                        payment_method: 'pm_card_visa',
                     });
 
-                    if(session.url){
-                        return res.status(200).json({
-                            status:true,
-                            message:"Payment process has been started.",
-                            payment_url:session.url
-                        })
+                    return res.json({transfer});
+
+                    // test========
+
+                    // Create a product
+                    const product = await stripe.products.create({
+                        name: jobInfo.title,
+                    });
+
+                    if(product.id){
+                        
+                        // Assign price to the product
+                        const price = await stripe.prices.create({
+                            unit_amount: jobInfo.cost,
+                            currency: process.env.CURRENCY,
+                            product: product.id,
+                        });
+
+                        if(price.id){
+
+                            // Send payment from admin account to helper
+                            const session = await stripe.checkout.sessions.create({
+                                line_items: [{
+                                    price: price.id,
+                                    quantity: 1,
+                                }],
+                                mode: 'payment',
+                                success_url: `${process.env.BASE_URL}api/job/end/success/${job._id}`,
+                                cancel_url: `${process.env.BASE_URL}api/job/end/failure/${job._id}`,
+                                payment_intent_data: {
+                                    application_fee_amount: 2,
+                                    transfer_data: {
+                                        destination: helper.stripeAccountId,
+                                    },
+                                },
+                            });
+
+                            if(session.url){
+                                return res.status(200).json({
+                                    status:true,
+                                    message:"Payment process has been started.",
+                                    payment_url:session.url
+                                })
+                            }
+                            return res.status(404).json({
+                                status:false,
+                                message:"Some error occurred. Please try again."
+                            });
+                        }
+                        return res.status(404).json({
+                            status:false,
+                            message:"Some error occurred while assigning the price to product on stripe."
+                        });
                     }
+                    return res.status(404).json({
+                        status:false,
+                        message:"Some error occurred while creating the product on stripe."
+                    });
                 } 
                 return res.status(404).json({
                     status:false,

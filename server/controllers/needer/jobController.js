@@ -50,7 +50,7 @@ const applyJob = asyncHandler( async(req,res) => {
             const user = req.user._id
 
             // Check if user has already applied on the job or not
-            const checkIfUserApplied = await JobApply.find({user})            
+            const checkIfUserApplied = await JobApply.find({job,user})            
             if(checkIfUserApplied.length > 0){
                 return res.status(404).json({
                     status:false,

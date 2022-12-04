@@ -187,7 +187,7 @@ const register = asyncHandler( async (req,res) => {
 
         if(user){
 
-            return res.status(400).json({
+            return res.status(200).json({
                 status:true,
                 message:"User created successfully",
                 data:{
@@ -202,7 +202,7 @@ const register = asyncHandler( async (req,res) => {
                 }
             });
         }else{
-            return res.status(400).json({
+            return res.status(404).json({
                 status: false,
                 message:'User is not created'
             })            
