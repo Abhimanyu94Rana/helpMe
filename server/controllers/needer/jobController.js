@@ -50,7 +50,8 @@ const applyJob = asyncHandler( async(req,res) => {
             const user = req.user._id
 
             // Check if user has already applied on the job or not
-            const checkIfUserApplied = await JobApply.find({job,user})            
+            const checkIfUserApplied = await JobApply.find({job,user})  
+                     
             if(checkIfUserApplied.length > 0){
                 return res.status(404).json({
                     status:false,
@@ -85,6 +86,29 @@ const applyJob = asyncHandler( async(req,res) => {
     
 })
 
+const appliedJobs = asyncHandler(async( req,res) => {
+    
+    try { 
+        const user = req.user._id
+        const appliedJobs = await JobApply.find({user:user})
+        if(appliedJobs){
+            return res.status(200).json({
+                status:true,
+                data:appliedJobs
+            })
+        }
+        return res.status(404).json({
+            status:false,
+            message:"User does not applied yet on any jobs."
+        })
+    } catch (error) {
+        return res.status(404).json({
+            status:false,
+            message:error.message
+        })
+    }
+})
+
 const startJob = asyncHandler( async(req,res) => {
     try {
         const job = req.params.id
@@ -114,5 +138,6 @@ const startJob = asyncHandler( async(req,res) => {
 export {
     // getJobs,
     applyJob,
+    appliedJobs,
     startJob
 }

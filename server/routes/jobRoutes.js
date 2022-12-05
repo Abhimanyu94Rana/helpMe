@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router()
 import {protect} from '../middleware/authMiddleware.js'
 import {createJob,getJobs,jobInfo,jobApplicants,hire, endJob, success, failure,endSuccess,endFailure} from '../controllers/creator/jobController.js'
-import {applyJob, startJob} from '../controllers/needer/jobController.js'
+import {applyJob,appliedJobs, startJob} from '../controllers/needer/jobController.js'
 import { payment } from "../controllers/paymentController.js";
 
 router.get('/list',protect,getJobs)
@@ -19,6 +19,7 @@ router.post('/:id/payment',protect,payment)
 
 // Needer
 router.post('/apply/:id',protect,applyJob)
+router.get('/applied',protect,appliedJobs)
 router.post('/start/:id',protect,startJob)
 
 

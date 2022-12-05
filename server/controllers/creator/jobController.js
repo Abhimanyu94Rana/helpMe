@@ -176,22 +176,28 @@ const jobApplicants = asyncHandler(async(req,res) => {
     try {
         
         const user = req.user._id
-        const jobIds = await Job.find({user:user}).select('_id').distinct('_id')          
-        const applicants = await JobApply.find({
-            'job': { $in: [
-                jobIds
-            ]}
-        }).populate('user').populate('job');
-        
-        if(applicants.length > 0){
-            return res.status(200).json({
-                status:true,
-                data:applicants
+        const jobIds = await Job.find({user:user}).select('_id').distinct('_id') 
+
+        if(jobIds){ 
+
+            const applicants = await JobApply.find({
+                'job': { $in: jobIds}
+            }).populate('user').populate('job');   
+            
+            if(applicants.length > 0){
+                return res.status(200).json({
+                    status:true,
+                    data:applicants
+                })
+            }
+            return res.status(404).json({
+                status:false,
+                message:"Nobody has applied on your jobs yet."
             })
-        }
+        } 
         return res.status(404).json({
             status:false,
-            message:"Nobody has applied on your jobs yet."
+            message:"User has not created any job yet."
         })
 
     } catch (error) {
@@ -250,105 +256,109 @@ const hire = asyncHandler(async(req,res) => {
 })
 
 const endJob = asyncHandler( async(req,res) => {
-    try {
-       
-        const job = req.params.id
+    try { 
+
         const jobOwner = req.user._id
-
+        const id = req.params.id    
         // Check if job is running or not
-        const isJobRunning = await JobApply.findOne({job,jobOwner})        
-        if(isJobRunning){                        
-            
-            if(isJobRunning.isHired === true && isJobRunning.status === 1){
+        const isJobRunning = await JobApply.findOne({_id:id,jobOwner:jobOwner,isHired:true,status:1})
+        if(isJobRunning){    
 
-                // Find job jobInfo
-                const jobInfo = await Job.findById(job);
+            // Find Job
+            const jobInfo = await Job.findById(isJobRunning.job);
 
-                // Find helper (user to whom payment will be sent after the job completion) info
-                const helper = await User.findById(isJobRunning.user)
-                if(jobInfo && helper){
-                    console.log(helper.stripeAccountId); 
+            // Find helper (To whom payment will be sent after the job completion)
+            const helper = await User.findById(isJobRunning.user)
+            if(jobInfo && helper){
 
+                // Send payment to helper
+                const payment = await stripe.transfers.create({
+                    amount: jobInfo.cost,
+                    currency: process.env.CURRENCY,
+                    destination: helper.stripeAccountId
+                });
+                
+                if(payment.id){
 
-                    // test========
-
-                    const transfer = await stripe.transfers.create({
-                        amount: 1,
-                        currency: process.env.CURRENCY,
-                        destination: helper.stripeAccountId,
-                        payment_method: 'pm_card_visa',
-                    });
-
-                    return res.json({transfer});
-
-                    // test========
-
-                    // Create a product
-                    const product = await stripe.products.create({
-                        name: jobInfo.title,
-                    });
-
-                    if(product.id){
-                        
-                        // Assign price to the product
-                        const price = await stripe.prices.create({
-                            unit_amount: jobInfo.cost,
-                            currency: process.env.CURRENCY,
-                            product: product.id,
-                        });
-
-                        if(price.id){
-
-                            // Send payment from admin account to helper
-                            const session = await stripe.checkout.sessions.create({
-                                line_items: [{
-                                    price: price.id,
-                                    quantity: 1,
-                                }],
-                                mode: 'payment',
-                                success_url: `${process.env.BASE_URL}api/job/end/success/${job._id}`,
-                                cancel_url: `${process.env.BASE_URL}api/job/end/failure/${job._id}`,
-                                payment_intent_data: {
-                                    application_fee_amount: 2,
-                                    transfer_data: {
-                                        destination: helper.stripeAccountId,
-                                    },
-                                },
-                            });
-
-                            if(session.url){
-                                return res.status(200).json({
-                                    status:true,
-                                    message:"Payment process has been started.",
-                                    payment_url:session.url
-                                })
-                            }
-                            return res.status(404).json({
-                                status:false,
-                                message:"Some error occurred. Please try again."
-                            });
-                        }
-                        return res.status(404).json({
-                            status:false,
-                            message:"Some error occurred while assigning the price to product on stripe."
-                        });
+                    // Change status of job to 2 (ended)
+                    const status = 2 // 2:ended
+                    const endTime = new Date() 
+                    const jobApply = await JobApply.findByIdAndUpdate(id,{status,endTime},{new: true})
+                    if(jobApply){
+                        return res.status(200).json({
+                            status:true,
+                            message:"Job has ended successfully.",
+                            data:jobApply
+                        })
                     }
                     return res.status(404).json({
                         status:false,
-                        message:"Some error occurred while creating the product on stripe."
-                    });
-                } 
+                        message:"Some error has occurred. Job has not ended."
+                    })
+                }
                 return res.status(404).json({
                     status:false,
-                    message:"Job or Helper not found."
-                })                   
-
-            }else{
-                return res.status(404).json({
-                    status:false,
-                    message:"Job is not hired or may be ended."
+                    message:"Some error has occurred while payment."
                 })
-            }
+                // Create a product
+                // const product = await stripe.products.create({
+                //     name: jobInfo.title,
+                // });
+
+                // if(product.id){
+                    
+                //     // Assign price to the product
+                //     const price = await stripe.prices.create({
+                //         unit_amount: jobInfo.cost,
+                //         currency: process.env.CURRENCY,
+                //         product: product.id,
+                //     });
+
+                //     if(price.id){
+
+                //         // Send payment from admin account to helper
+                //         const session = await stripe.checkout.sessions.create({
+                //             line_items: [{
+                //                 price: price.id,
+                //                 quantity: 1,
+                //             }],
+                //             mode: 'payment',
+                //             success_url: `${process.env.BASE_URL}api/job/end/success/${job._id}`,
+                //             cancel_url: `${process.env.BASE_URL}api/job/end/failure/${job._id}`,
+                //             payment_intent_data: {
+                //                 application_fee_amount: 2,
+                //                 transfer_data: {
+                //                     destination: helper.stripeAccountId,
+                //                 },
+                //             },
+                //         });
+
+                //         if(session.url){
+                //             return res.status(200).json({
+                //                 status:true,
+                //                 message:"Payment process has been started.",
+                //                 payment_url:session.url
+                //             })
+                //         }
+                //         return res.status(404).json({
+                //             status:false,
+                //             message:"Some error occurred. Please try again."
+                //         });
+                //     }
+                //     return res.status(404).json({
+                //         status:false,
+                //         message:"Some error occurred while assigning the price to product on stripe."
+                //     });
+                // }
+                // return res.status(404).json({
+                //     status:false,
+                //     message:"Some error occurred while creating the product on stripe."
+                // });
+            } 
+            return res.status(404).json({
+                status:false,
+                message:"Job or Helper not found."
+            })
         }
         return res.status(404).json({
             status:false,
