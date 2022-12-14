@@ -19,7 +19,7 @@ const createJob = asyncHandler( async(req,res) => {
     
         if(job){
     
-            // Intergate Payment
+            // Integrate Payment
             const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
@@ -42,17 +42,6 @@ const createJob = asyncHandler( async(req,res) => {
                 message:"Payment process has been started.",
                 payment_url:session.url
             })
-    
-            // res.status(200)
-            // res.json({
-            //     status:true,
-            //     message:"Job has been created successfully.",
-            //     data:{
-            //         _id:job._id,
-            //         title:job.title,
-            //         cost:job.cost
-            //     }
-            // })
         }
         
     } catch (error) {
@@ -146,7 +135,7 @@ const getJobs =  asyncHandler( async(req,res) => {
 }) 
 
 const jobInfo = asyncHandler( async(req,res) => {
-
+        console.log('ff');
     try {
 
         const job = await Job.findById(req.params.id)
@@ -271,9 +260,12 @@ const endJob = asyncHandler( async(req,res) => {
             const helper = await User.findById(isJobRunning.user)
             if(jobInfo && helper){
 
+                // Send 5% commission to admin
+                const cost = jobInfo.cost
+
                 // Send payment to helper
                 const payment = await stripe.transfers.create({
-                    amount: jobInfo.cost,
+                    amount: cost,
                     currency: process.env.CURRENCY,
                     destination: helper.stripeAccountId
                 });
