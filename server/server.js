@@ -9,9 +9,6 @@ import fileRoutes from './routes/fileRoutes.js'
 import {notFound,errorHandler} from './middleware/errorMiddleware.js'
 import path from "path"
 import { fileURLToPath } from 'url';
-
-// Socket
-import http from 'http'
 import {Server} from "socket.io"
 
 import { createRequire } from 'module';
@@ -30,9 +27,7 @@ dotenv.config()
 connectDB()
 
 const app = express()
-
-// Create server for socket
-const server = http.createServer(app)
+ 
 
 // middleware
 app.use(express.json())
@@ -65,22 +60,21 @@ app.use(notFound)
 app.use(errorHandler)
 
 // Start the server
-const PORT = process.env.PORT || 5000
-server.listen(`${PORT}`,console.log(`Server is running on ${PORT}`))
+const PORT = process.env.PORT || 3000
+const server = app.listen(`${PORT}`,console.log(`Server is running on ${PORT}`))
 
 // Socket
-// const io = require('socket.io')(http)
- 
 const io = new Server(server,{
     cors:{
-        origin:"http://localhost:3000",
+        origin:process.env.BASE_URL,
         methods:["GET","POST"]
     }
 })
 
 io.on('connection',(socket)=>{
-    console.log('Connected....');
+    console.log('Socket has started working.');
+    socket.emit('welcome','How helpme help you ?');
     socket.on('send',(data)=>{
         console.log(data);
-    })
+    });
 })
