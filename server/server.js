@@ -32,7 +32,7 @@ const app = express()
 // middleware
 app.use(express.json())
 
-app.get('/',(req,res) => {
+app.get('/status',(req,res) => {
     res.send('HelpMe is ready to provide its service.')
 })
 
@@ -66,14 +66,15 @@ const server = app.listen(`${PORT}`,console.log(`Server is running on ${PORT}`))
 // Socket
 const io = new Server(server,{
     cors:{
-        origin:process.env.BASE_URL,
+        origin: '*',
         methods:["GET","POST"]
     }
 })
 
 io.on('connection',(socket)=>{
-    console.log('Socket has started working.');
-    socket.emit('welcome','How helpme help you ?');
+    
+    socket.emit('welcome','How can helpme help you ?');
+
     socket.on('send',(data)=>{
         console.log(data);
     });
