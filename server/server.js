@@ -67,10 +67,7 @@ const server = app.listen(`${PORT}`,console.log(`Server is running on ${PORT}`))
 
 // Socket
 const io = new Server(server,{
-    cors:{
-        origin: '*',
-        methods:["GET","POST"]
-    }
+    cors:{origin: 'https://www.piesocket.com'}
 })
 
 io.on('connection',(socket)=>{
