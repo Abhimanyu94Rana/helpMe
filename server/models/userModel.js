@@ -40,6 +40,9 @@ const userSchema = mongoose.Schema({
         adharCardBack:{
             type:String
         },
+        certificate:{
+            type:String
+        },
         panCard:{
             type:String
         },
