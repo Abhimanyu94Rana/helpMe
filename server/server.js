@@ -10,6 +10,8 @@ import {notFound,errorHandler} from './middleware/errorMiddleware.js'
 import path from "path"
 import { fileURLToPath } from 'url';
 import {Server} from "socket.io"
+import cors from "cors";
+
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -27,7 +29,7 @@ dotenv.config()
 connectDB()
 
 const app = express()
- 
+app.use(cors());
 
 // middleware
 app.use(express.json())
