@@ -72,9 +72,9 @@ const io = new Server(server,{
 
 io.on('connection',(socket)=>{
     
-    socket.emit('welcome','How can helpme help you ?');
-
-    socket.on('send',(data)=>{
+    // socket.emit('welcome','How can helpme help you ?');
+    socket.on('location',(data)=>{
         console.log(data);
+        socket.broadcast.emit('receive',{location:data})
     });
 })
